@@ -46,29 +46,6 @@ install_packages() {
     fi
 }
 
-# Install Python packages from GitHub if missing
-install_python_packages() {
-    declare -A packages
-    packages=(
-        [websockets]="https://github.com/aaugustin/websockets.git"
-        [aioconsole]="https://github.com/vxgmichel/aioconsole.git"
-        [cryptography]="https://github.com/pyca/cryptography.git"
-    )
-
-    for pkg in "${!packages[@]}"; do
-        if ! python3 -c "import $pkg" &>/dev/null; then
-            echo "Installing $pkg from GitHub..."
-            git clone --depth 1 "${packages[$pkg]}" /tmp/$pkg
-            cd /tmp/$pkg
-            python3 setup.py install
-            cd -
-            rm -rf /tmp/$pkg
-        else
-            echo "$pkg is already installed."
-        fi
-    done
-}
-
 create_venv() {
     if [ ! -d "venv" ]; then
         echo "Creating Python virtual environment..."
@@ -78,15 +55,23 @@ create_venv() {
     fi
 }
 
+install_python_packages() {
+    echo "Activating virtual environment and installing Python packages from GitHub..."
+    source venv/bin/activate
+    pip install --upgrade pip
+
+    # Install from GitHub using pip
+    pip install git+https://github.com/aaugustin/websockets.git
+    pip install git+https://github.com/vxgmichel/aioconsole.git
+    pip install git+https://github.com/pyca/cryptography.git
+
+    deactivate
+}
+
 main() {
     install_packages
     create_venv
-
-    echo "Activating virtual environment and installing Python packages..."
-    source venv/bin/activate
-    pip install --upgrade pip
     install_python_packages
-    deactivate
 
     echo "✅ Installation complete. Use ./run to start Linkd."
 }
