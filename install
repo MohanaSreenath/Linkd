@@ -72,7 +72,8 @@ main() {
     install_packages
     create_venv
     install_python_packages
-
+    chmod +x run
+    chmod +x uninstall
     echo "✅ Installation complete. Use ./run to start Linkd."
 }
 
