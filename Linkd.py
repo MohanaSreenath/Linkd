@@ -182,7 +182,7 @@ def start_cloudflare_tunnel_http(local_port):
     return proc, domain
 
 def main():
-    print("🔒 Secure Sayun P2P Chat (E2E Encrypted)")
+    print("🔒 Secure Linkd P2P Chat (E2E Encrypted)")
     print("----------------------------------------")
     print("Choose a mode:")
     print("  [1] Listen (host chat room)")
