@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [ ! -d "venv" ]; then
+    echo "❌ Virtual environment not found. Please run ./install first."
+    exit 1
+fi
+
+source venv/bin/activate
+python3 Linkd.py
+

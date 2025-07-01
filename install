@@ -1,0 +1,95 @@
+#!/bin/bash
+
+set -e
+
+# Function to detect package manager and install system packages
+install_packages() {
+    if command -v apt &>/dev/null; then
+        PKG_MANAGER="apt"
+    elif command -v dnf &>/dev/null; then
+        PKG_MANAGER="dnf"
+    elif command -v yum &>/dev/null; then
+        PKG_MANAGER="yum"
+    elif command -v pacman &>/dev/null; then
+        PKG_MANAGER="pacman"
+    elif command -v apk &>/dev/null; then
+        PKG_MANAGER="apk"
+    else
+        echo "❌ No supported package manager found. Please install dependencies manually."
+        exit 1
+    fi
+
+    echo "Detected package manager: $PKG_MANAGER"
+
+    # Install git if missing
+    if ! command -v git &>/dev/null; then
+        echo "Installing git..."
+        case $PKG_MANAGER in
+            apt) sudo apt update && sudo apt install -y git;;
+            dnf) sudo dnf install -y git;;
+            yum) sudo yum install -y git;;
+            pacman) sudo pacman -Sy --noconfirm git;;
+            apk) sudo apk add git;;
+        esac
+    fi
+
+    # Install python3-venv or equivalent if missing
+    if ! python3 -m venv --help &>/dev/null; then
+        echo "Installing python3-venv or equivalent..."
+        case $PKG_MANAGER in
+            apt) sudo apt update && sudo apt install -y python3-venv;;
+            dnf) sudo dnf install -y python3-venv;;
+            yum) sudo yum install -y python3-venv;;
+            pacman) sudo pacman -Sy --noconfirm python-virtualenv;;
+            apk) sudo apk add py3-virtualenv;;
+        esac
+    fi
+}
+
+# Install Python packages from GitHub if missing
+install_python_packages() {
+    declare -A packages
+    packages=(
+        [websockets]="https://github.com/aaugustin/websockets.git"
+        [aioconsole]="https://github.com/vxgmichel/aioconsole.git"
+        [cryptography]="https://github.com/pyca/cryptography.git"
+    )
+
+    for pkg in "${!packages[@]}"; do
+        if ! python3 -c "import $pkg" &>/dev/null; then
+            echo "Installing $pkg from GitHub..."
+            git clone --depth 1 "${packages[$pkg]}" /tmp/$pkg
+            cd /tmp/$pkg
+            python3 setup.py install
+            cd -
+            rm -rf /tmp/$pkg
+        else
+            echo "$pkg is already installed."
+        fi
+    done
+}
+
+create_venv() {
+    if [ ! -d "venv" ]; then
+        echo "Creating Python virtual environment..."
+        python3 -m venv venv
+    else
+        echo "Virtual environment already exists."
+    fi
+}
+
+main() {
+    install_packages
+    create_venv
+
+    echo "Activating virtual environment and installing Python packages..."
+    source venv/bin/activate
+    pip install --upgrade pip
+    install_python_packages
+    deactivate
+
+    echo "✅ Installation complete. Use ./run to start Linkd."
+}
+
+main
+

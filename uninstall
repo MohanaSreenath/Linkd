@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ -d "venv" ]; then
+    echo "Removing virtual environment..."
+    rm -rf venv
+else
+    echo "Virtual environment not found. Nothing to uninstall."
+fi
+
+echo "✅ Uninstallation complete."
+
