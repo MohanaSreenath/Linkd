@@ -1,6 +1,6 @@
 # Linkd
 
-####To get this app you need to clone the repo first
+### To get this app you need to clone the repo first
 
 1. git clone https://github.com/MohanaSreenath/Linkd.git
 2. chmod +x install
