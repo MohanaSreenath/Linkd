@@ -2,6 +2,66 @@
 
 set -e
 
+# Function to install cloudflared using the package manager
+install_cloudflare_tunnel() {
+    if command -v cloudflared &>/dev/null; then
+        echo "Cloudflared is already installed."
+        return 0
+    fi
+
+    echo "Attempting to install cloudflared..."
+
+    if [[ "$PKG_MANAGER" == "apt" ]]; then
+        # Check if lsb_release is available; it's needed for the Cloudflare repo URL
+        if ! command -v lsb_release &>/dev/null; then
+            echo "Installing lsb-release..."
+            sudo apt install -y lsb-release
+        fi
+
+        # Try installing via Cloudflare repository (The most secure way)
+        echo "Installing cloudflared via Cloudflare APT repository..."
+        
+        # 1. Add Cloudflare's official GPG key
+        curl -fsSL https://pkg.cloudflare.com/cloudflare-release/cloudflare-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloudflare-archive-keyring.gpg 2>/dev/null
+        
+        # 2. Add Cloudflare's repository
+        echo "deb [signed-by=/usr/share/keyrings/cloudflare-archive-keyring.gpg] https://pkg.cloudflare.com/cloudflared/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflared.list > /dev/null
+        
+        # 3. Update and install (Suppress errors, we will check success below)
+        sudo apt update > /dev/null 2>&1
+        if sudo apt install -y cloudflared; then
+            echo "✅ cloudflared installed successfully via APT."
+            return 0
+        fi
+        
+        echo "⚠️ Cloudflared APT installation failed. Falling back to manual binary install."
+    
+    fi
+    
+    # Fallback for all systems if package install fails or for unsupported package managers
+    echo "Attempting manual installation of cloudflared binary (amd64)..."
+    
+    # Download the latest 64-bit binary
+    curl -L --output cloudflared_tmp https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+    
+    if [ ! -f "cloudflared_tmp" ]; then
+        echo "❌ Failed to download cloudflared binary. Skipping tunnel setup."
+        return 1
+    fi
+
+    # Make executable and move to a PATH location
+    chmod +x cloudflared_tmp
+    sudo mv cloudflared_tmp /usr/local/bin/cloudflared
+    
+    if command -v cloudflared &>/dev/null; then
+        echo "✅ cloudflared installed successfully via direct download."
+        return 0
+    else
+        echo "❌ Manual installation failed. Skipping tunnel setup."
+        return 1
+    fi
+}
+
 # Function to detect package manager and install system packages
 install_packages() {
     if command -v apt &>/dev/null; then
@@ -44,6 +104,19 @@ install_packages() {
             apk) sudo apk add py3-virtualenv;;
         esac
     fi
+    
+    # Install build dependencies for cryptography (libssl-dev, etc.)
+    echo "Installing build dependencies for Python cryptography package..."
+    case $PKG_MANAGER in
+        apt) sudo apt install -y libssl-dev build-essential;;
+        dnf|yum) sudo $PKG_MANAGER install -y openssl-devel gcc;;
+        pacman) sudo pacman -Sy --noconfirm openssl base-devel;;
+        apk) sudo apk add openssl-dev build-base;;
+    esac
+
+    
+    # Install cloudflared using the helper function
+    install_cloudflare_tunnel
 }
 
 create_venv() {
@@ -63,6 +136,8 @@ install_python_packages() {
     # Install from GitHub using pip
     pip install git+https://github.com/aaugustin/websockets.git
     pip install git+https://github.com/vxgmichel/aioconsole.git
+    
+    # Cryptography is listed last as it is the most complex dependency
     pip install git+https://github.com/pyca/cryptography.git
 
     deactivate
@@ -78,4 +153,3 @@ main() {
 }
 
 main
-
