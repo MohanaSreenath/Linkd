@@ -138,7 +138,7 @@ install_python_packages() {
     pip install "cryptography<42"
     
     # Cryptography is listed last as it is the most complex dependency
-    pip install git+https://github.com/pyca/cryptography.git
+    pip install "cryptography<42"
 
     deactivate
 }
