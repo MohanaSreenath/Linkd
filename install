@@ -134,8 +134,8 @@ install_python_packages() {
     pip install --upgrade pip
 
     # Install from GitHub using pip
-    pip install git+https://github.com/aaugustin/websockets.git
-    pip install git+https://github.com/vxgmichel/aioconsole.git
+    pip install "websockets<11"
+    pip install "cryptography<42"
     
     # Cryptography is listed last as it is the most complex dependency
     pip install git+https://github.com/pyca/cryptography.git
