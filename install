@@ -135,12 +135,19 @@ install_python_packages() {
 
     # Install from GitHub using pip
     pip install "websockets<11"
+<<<<<<< HEAD
     # Install from GitHub using pip
     pip install "websockets<11"
+=======
+>>>>>>> e046803 (adding Docker file)
     pip install git+https://github.com/vxgmichel/aioconsole.git
     
     # Cryptography is listed last as it is the most complex dependency
     pip install "cryptography<42"
+<<<<<<< HEAD
+=======
+
+>>>>>>> e046803 (adding Docker file)
     deactivate
 }
 

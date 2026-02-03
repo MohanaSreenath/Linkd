@@ -1,0 +1,6 @@
+#!/home/cloudshell-user/Linkd/venv/bin/python3
+import sys
+from aioconsole import run_apython
+if __name__ == '__main__':
+    sys.argv[0] = sys.argv[0].removesuffix('.exe')
+    sys.exit(run_apython())
